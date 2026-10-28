@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512"><defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#060920"/><stop offset="1" stop-color="#16245a"/></linearGradient>
+<radialGradient id="y"><stop offset="0" stop-color="#fff6c8"/><stop offset=".35" stop-color="#ffd84a"/><stop offset="1" stop-color="#ffd84a" stop-opacity="0"/></radialGradient>
+<radialGradient id="c"><stop offset="0" stop-color="#e8feff"/><stop offset=".35" stop-color="#5cf2ff"/><stop offset="1" stop-color="#5cf2ff" stop-opacity="0"/></radialGradient>
+<radialGradient id="p"><stop offset="0" stop-color="#ffe3ec"/><stop offset=".35" stop-color="#ff5c8a"/><stop offset="1" stop-color="#ff5c8a" stop-opacity="0"/></radialGradient></defs>
+<rect width="512" height="512" fill="url(#bg)"/>
+<g id="art" transform="translate(256 256) scale(0.74) translate(-256 -256)">
+<path d="M196 112 v34 q-46 8 -46 48 v196 q0 40 40 40 h132 q40 0 40 -40 v-196 q0 -40 -46 -48 v-34 z" fill="rgba(160,190,255,.12)" stroke="#cfdcff" stroke-opacity=".75" stroke-width="10" stroke-linejoin="round"/>
+<rect x="186" y="92" width="140" height="26" rx="10" fill="#c99a4a"/>
+<circle cx="256" cy="372" r="58" fill="url(#y)"/><circle cx="214" cy="290" r="54" fill="url(#c)"/><circle cx="296" cy="226" r="52" fill="url(#p)"/>
+<circle cx="256" cy="372" r="12" fill="#fff"/><circle cx="214" cy="290" r="11" fill="#fff"/><circle cx="296" cy="226" r="11" fill="#fff"/>
+</g></svg>

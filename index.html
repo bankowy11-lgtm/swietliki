@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#070b22">
+<title>Świetliki</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  html, body { margin: 0; height: 100%; background: #070b22; overflow: hidden; touch-action: none;
+    user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+    font-family: system-ui, "Segoe UI", sans-serif; color: #eef1ff; }
+  #cv { display: block; position: fixed; inset: 0; width: 100%; height: 100%; }
+  #top { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center;
+    padding: calc(12px + env(safe-area-inset-top)) 14px 0; pointer-events: none; }
+  #top > * { pointer-events: auto; }
+  #lvl { font-weight: 800; font-size: 22px; color: #ffe9a8; text-shadow: 0 0 14px #ffcf4a; text-align: center; }
+  #moves { font-size: 12px; color: #aab3e6; text-align: center; }
+  #bottom { position: fixed; left: 0; right: 0; bottom: calc(16px + env(safe-area-inset-bottom)); display: flex;
+    justify-content: center; gap: 10px; }
+  .btn { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); color: #eef1ff;
+    border-radius: 16px; padding: 10px 13px; font: 600 15px system-ui, sans-serif; cursor: pointer; min-width: 44px; }
+  .btn:active { transform: scale(.95); }
+  .btn[disabled] { opacity: .35; }
+  .btn .n { display: inline-block; margin-left: 6px; background: #ffcf4a; color: #2a1f00; border-radius: 9px;
+    padding: 0 6px; font-size: 12px; }
+  .ov { position: fixed; inset: 0; display: none; place-items: center; background: rgba(4,7,22,.78);
+    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); overflow-y: auto; }
+  .ov.show { display: grid; }
+  .card { text-align: center; padding: calc(20px + env(safe-area-inset-top)) 20px calc(20px + env(safe-area-inset-bottom)); max-width: 340px; width: 100%; box-sizing: border-box; }
+  .card h1 { margin: 0 0 6px; font-size: 44px; color: #ffe9a8; text-shadow: 0 0 22px #ffcf4a, 0 0 50px #ffb000; letter-spacing: 1px; }
+  .card h2 { margin: 0 0 8px; font-size: 28px; color: #ffe9a8; text-shadow: 0 0 18px #ffcf4a; }
+  .card p { color: #c3c9f0; margin: 8px 0 18px; line-height: 1.45; }
+  .big { background: #ffcf4a; color: #2a1f00; border: 0; border-radius: 22px; padding: 14px 34px;
+    font: 800 19px system-ui, sans-serif; box-shadow: 0 0 26px rgba(255,207,74,.6); cursor: pointer; }
+  .big:active { transform: scale(.96); }
+  .stars { font-size: 34px; letter-spacing: 6px; margin: 4px 0 6px; color: #ffcf4a; text-shadow: 0 0 14px #ffcf4a; }
+  .stars .off { color: #3a4170; text-shadow: none; }
+  .chapters { display: grid; gap: 8px; margin: 18px 0 4px; text-align: left; }
+  .ch { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 9px 12px; }
+  .ch.cur { border-color: #ffcf4a; background: rgba(255,207,74,.09); }
+  .ch.lock { opacity: .55; }
+  .ch .t { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; gap: 8px; }
+  .ch .t span:last-child { color: #aab3e6; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ch .s { font-size: 12px; color: #aab3e6; margin-top: 2px; }
+  .bar { height: 6px; background: rgba(0,0,0,.4); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: #ffcf4a; border-radius: 3px; box-shadow: 0 0 8px #ffcf4a; }
+  .new { font-size: 13px; font-weight: 800; letter-spacing: 2px; color: #5cf2ff; text-transform: uppercase; }
+  .demo { width: 160px; height: 120px; margin: 6px auto 0; display: block; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="top">
+  <button class="btn" id="snd" aria-label="Dźwięk">🔊</button>
+  <div><div id="lvl">Poziom 1</div><div id="moves">ruchy: 0</div></div>
+  <button class="btn" id="menuBtn" aria-label="Menu">☰</button>
+</div>
+<div id="bottom">
+  <button class="btn" id="restart" aria-label="Od nowa">↻</button>
+  <button class="btn" id="undo">↶ Cofnij<span class="n" id="undoN">5</span></button>
+  <button class="btn" id="addJar">＋ Słoik<span class="n" id="jarN">1</span></button>
+</div>
+
+<div class="ov show" id="menu"><div class="card">
+  <h1>Świetliki</h1>
+  <p>Przenoś świetliki między słoikami. Do świetlika możesz dołożyć tylko taki sam kolor. Zbierz każdy kolor w osobnym słoiku!</p>
+  <button class="big" id="play">Graj</button>
+  <div class="chapters" id="chapters"></div>
+</div></div>
+
+<div class="ov" id="intro"><div class="card">
+  <div class="new">Nowość</div>
+  <h2 id="introT"></h2>
+  <canvas class="demo" id="demo" width="320" height="240"></canvas>
+  <p id="introP"></p>
+  <button class="big" id="introGo">Rozumiem</button>
+</div></div>
+
+<div class="ov" id="win"><div class="card">
+  <h2 id="winT">Pięknie świeci!</h2>
+  <div class="stars" id="winStars"></div>
+  <p id="winInfo"></p>
+  <div class="chapters" id="winChap"></div>
+  <button class="big" id="next">Dalej</button>
+</div></div>
+
+<script>
+'use strict';
+const CAP = 4, MAX_LEVEL = 100;
+const COLORS = ['#ffd84a', '#5cf2ff', '#ff5c8a', '#8cff6a', '#b98cff', '#ff9a3c', '#4a8cff', '#f4f4ff', '#ff4ad8', '#3cffb4', '#d9b26a', '#ff3c3c'];
+const CHAPTERS = [
+  { name: 'Polana', note: 'pierwsze świetliki' },
+  { name: 'Mgła', note: 'część świetlików śpi', feature: 'hidden',
+    title: 'Śpiące świetliki', text: 'Szare świetliki śpią we mgle. Obudzą się i pokażą kolor, gdy znajdą się na samej górze słoika.' },
+  { name: 'Szron', note: 'zamrożony słoik', feature: 'frozen',
+    title: 'Zamrożony słoik', text: 'Oszroniony słoik jest zamknięty. Odtaje, gdy napełnisz tyle słoików jednym kolorem, ile pokazuje płatek śniegu.' },
+  { name: 'Stary sad', note: 'więcej kolorów' },
+  { name: 'Mokradła', note: 'gęstsza mgła' },
+  { name: 'Łąka nocą', note: 'szron i mgła razem' },
+  { name: 'Wzgórze', note: 'dziesięć kolorów' },
+  { name: 'Brzozowy gaj', note: 'jedenaście kolorów' },
+  { name: 'Mleczna Droga', note: 'pełna tęcza' },
+  { name: 'Gwiazdozbiór', note: 'ostatni sprawdzian' },
+];
+const chapterOf = lv => Math.min(Math.floor((lv - 1) / 10), CHAPTERS.length - 1);
+const featureFrom = f => CHAPTERS.findIndex(c => c.feature === f) * 10 + 1;
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+
+// --- zapis ---
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+let level = store.get('sw_level', 1), muted = store.get('sw_muted', false);
+let starsBy = store.get('sw_starsBy', {}), seen = store.get('sw_seen', []);
+
+// --- dźwięk (Web Audio, bez plików) ---
+let actx = null;
+function audio() {
+  if (muted) return null;
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+  if (actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function tone(freq, dur = .18, type = 'sine', vol = .12, delay = 0) {
+  const a = audio(); if (!a) return;
+  const t = a.currentTime + delay, o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+const SCALE = [523, 587, 659, 784, 880, 1047, 1175, 1319, 1568, 1760, 2093, 2349];
+const S = {
+  pick: c => tone(SCALE[c] / 2, .12, 'triangle', .08),
+  drop: c => tone(SCALE[c], .22, 'sine', .1),
+  bad: () => { tone(180, .12, 'square', .05); tone(150, .14, 'square', .05, .06); },
+  wake: () => tone(1900, .15, 'sine', .05),
+  thaw: () => [1568, 1319, 1047].forEach((f, i) => tone(f, .25, 'sine', .06, i * .06)),
+  full: () => [0, 2, 4].forEach((s, i) => tone(SCALE[s + 3], .3, 'sine', .08, i * .07)),
+  win: () => [0, 2, 4, 7, 9].forEach((s, i) => tone(SCALE[s], .45, 'triangle', .09, i * .1)),
+};
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+
+// --- poziomy ---
+function rng(seed) { return () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
+function params(lv) {
+  return {
+    k: Math.min(3 + Math.floor((lv - 1) / 7), COLORS.length),
+    pHidden: lv >= featureFrom('hidden') ? Math.min(.3 + (lv - featureFrom('hidden')) * .008, .75) : 0,
+    frozen: lv >= featureFrom('frozen') && (lv < featureFrom('frozen') + 10 || lv % 3 !== 0),
+  };
+}
+const isFull = A => A.length === CAP && A.every(c => c === A[0]);
+const fullCount = (J, skip) => J.reduce((n, a, i) => n + (i !== skip && isFull(a) ? 1 : 0), 0);
+function isDone(J) { return J.every(a => a.length === 0 || isFull(a)); }
+
+// DFS sprawdza, czy układ da się ułożyć (z limitem), żeby nie dawać nierozwiązywalnych poziomów.
+// fz = indeks zamrożonego słoika, need = ile pełnych słoików go rozmraża.
+function solvable(J0, fz = -1, need = 0) {
+  const seenK = new Set(); let n = 0;
+  const enc = a => a.map(c => String.fromCharCode(65 + c)).join('');
+  function dfs(J) {
+    if (isDone(J)) return true;
+    if (++n > 40000) return false;
+    const open = fz < 0 || fullCount(J, fz) >= need;
+    const k = (open ? '' : enc(J[fz]) + '#') + J.filter((_, i) => open || i !== fz).map(enc).sort().join('|');
+    if (seenK.has(k)) return false; seenK.add(k);
+    for (let a = 0; a < J.length; a++) {
+      if (!open && a === fz) continue;
+      const A = J[a]; if (!A.length || isFull(A)) continue;
+      const c = A[A.length - 1];
+      let run = 1; while (run < A.length && A[A.length - 1 - run] === c) run++;
+      for (let b = 0; b < J.length; b++) {
+        if (a === b || (!open && b === fz)) continue;
+        const B = J[b];
+        if (B.length >= CAP || (B.length && B[B.length - 1] !== c) || (!B.length && run === A.length)) continue;
+        const m = Math.min(run, CAP - B.length), N = J.map(x => x.slice());
+        for (let i = 0; i < m; i++) N[b].push(N[a].pop());
+        if (dfs(N)) return true;
+      }
+    }
+    return false;
+  }
+  return dfs(J0.map(a => a.slice()));
+}
+
+function makeLevel(lv) {
+  const { k, pHidden, frozen } = params(lv), r = rng(lv * 7919 + 17);
+  for (let tries = 0; tries < 300; tries++) {
+    const pool = [];
+    for (let c = 0; c < k; c++) for (let i = 0; i < CAP; i++) pool.push(c);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const J = [];
+    for (let i = 0; i < k; i++) J.push(pool.slice(i * CAP, i * CAP + CAP));
+    J.push([], []);
+    if (J.some(isFull)) continue;
+    const fz = frozen ? Math.floor(r() * k) : -1, need = frozen ? (k >= 7 && r() < .5 ? 2 : 1) : 0;
+    if (!solvable(J, fz, need)) continue;
+    const mask = J.map(a => a.map((_, s) => s < a.length - 1 && r() < pHidden));
+    return { J, mask, fz, need };
+  }
+  const J = []; for (let i = 0; i < k; i++) J.push(Array(CAP).fill(i)); J.push([], []);
+  return { J, mask: J.map(a => a.map(() => false)), fz: -1, need: 0 }; // awaryjnie
+}
+
+// --- stan gry ---
+let jars = [], mask = [], fz = -1, need = 0, sel = -1, moves = 0, history = [], undoLeft = 5, jarLeft = 1, state = 'menu';
+let flying = [], hidden = new Map(), shakes = new Map(), glows = new Map(), particles = [], thawT = 0;
+
+function startLevel() {
+  const L = makeLevel(level);
+  jars = L.J; mask = L.mask; fz = L.fz; need = L.need;
+  sel = -1; moves = 0; history = []; undoLeft = 5; jarLeft = 1; thawT = 0;
+  flying = []; hidden.clear(); shakes.clear(); glows.clear(); particles = [];
+  state = 'play'; layout(); hud();
+}
+const frozenNow = j => j === fz && fz >= 0 && fullCount(jars, fz) < need;
+function hud() {
+  $('lvl').textContent = 'Poziom ' + level;
+  $('moves').textContent = CHAPTERS[chapterOf(level)].name + ' · ruchy: ' + moves;
+  $('undoN').textContent = undoLeft; $('jarN').textContent = jarLeft;
+  $('undo').disabled = !undoLeft || !history.length;
+  $('addJar').disabled = !jarLeft;
+  $('snd').textContent = muted ? '🔇' : '🔊';
+}
+
+// --- układ słoików ---
+let W = 0, H = 0, DPR = 1, L = { pos: [], jw: 0, jh: 0, d: 0 }, bgCanvas = null;
+function layout() {
+  const n = jars.length;
+  const rows = n > 6 ? 2 : 1, per = Math.ceil(n / rows);
+  const top = 90, bottom = 90, areaH = H - top - bottom;
+  let jw = Math.min(72, (W - 24) / per * .74);
+  let d = jw * .74, jh = d * CAP + jw * .55;
+  const maxJh = areaH / rows * .78;
+  if (jh > maxJh) { const s = maxJh / jh; jw *= s; d *= s; jh = maxJh; }
+  L = { pos: [], jw, jh, d };
+  for (let i = 0; i < n; i++) {
+    const row = Math.floor(i / per), inRow = row === rows - 1 ? n - per * (rows - 1) : per, col = i - row * per;
+    const gx = (W - inRow * jw) / (inRow + 1);
+    L.pos.push({ x: gx + col * (jw + gx), y: top + areaH / rows * row + (areaH / rows - jh) / 2 + 20 });
+  }
+}
+function slotXY(j, s) {
+  const p = L.pos[j];
+  return { x: p.x + L.jw / 2, y: p.y + L.jh - L.d * .62 - s * L.d * .98 };
+}
+
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2.5);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  buildBg(); if (jars.length) layout();
+}
+addEventListener('resize', resize);
+
+function buildBg() {
+  bgCanvas = document.createElement('canvas');
+  bgCanvas.width = W * DPR; bgCanvas.height = H * DPR;
+  const b = bgCanvas.getContext('2d'); b.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const g = b.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#060920'); g.addColorStop(.6, '#0d1640'); g.addColorStop(1, '#13204a');
+  b.fillStyle = g; b.fillRect(0, 0, W, H);
+  const r = rng(42);
+  for (let i = 0; i < 120; i++) { b.globalAlpha = r() * .7 + .1; b.fillStyle = '#fff'; b.fillRect(r() * W, r() * H * .7, r() * 1.6 + .4, r() * 1.6 + .4); }
+  b.globalAlpha = 1;
+  const mx = W * .82, my = H * .13, mr = Math.min(W, H) * .06;
+  const mg = b.createRadialGradient(mx, my, mr * .3, mx, my, mr * 4);
+  mg.addColorStop(0, 'rgba(255,240,200,.25)'); mg.addColorStop(1, 'rgba(255,240,200,0)');
+  b.fillStyle = mg; b.fillRect(0, 0, W, H);
+  b.fillStyle = '#fff3cf'; b.beginPath(); b.arc(mx, my, mr, 0, 7); b.fill();
+  b.fillStyle = '#060920'; b.beginPath(); b.arc(mx + mr * .45, my - mr * .2, mr * .9, 0, 7); b.fill();
+  b.fillStyle = '#050818';
+  b.beginPath(); b.moveTo(0, H);
+  for (let x = 0; x <= W; x += 6) b.lineTo(x, H - 26 - Math.abs(Math.sin(x * .37) * 22) - r() * 14);
+  b.lineTo(W, H); b.fill();
+}
+
+// --- logika ruchu ---
+function topRun(j) {
+  const A = jars[j], M = mask[j]; if (!A.length) return 0;
+  const c = A[A.length - 1]; let r = 1;
+  while (r < A.length && A[A.length - 1 - r] === c && !M[A.length - 1 - r]) r++;
+  return r;
+}
+function wakeTop(j) {
+  const M = mask[j];
+  if (M.length && M[M.length - 1]) {
+    M[M.length - 1] = false; S.wake();
+    const p = slotXY(j, M.length - 1), c = COLORS[jars[j][M.length - 1]];
+    for (let i = 0; i < 10; i++) particles.push({ x: p.x, y: p.y, vx: (Math.random() - .5) * 3, vy: -Math.random() * 2.5, life: .8, c });
+  }
+}
+
+function tapJar(j) {
+  if (state !== 'play') return;
+  audio();
+  const A = jars[j];
+  if (frozenNow(j)) { shake(j); S.bad(); buzz(20); return; }
+  if (sel === -1) {
+    if (!A.length || isFull(A)) { shake(j); return; }
+    sel = j; S.pick(A[A.length - 1]); return;
+  }
+  if (sel === j) { sel = -1; return; }
+  const from = jars[sel], c = from[from.length - 1];
+  if (A.length >= CAP || (A.length && A[A.length - 1] !== c)) {
+    shake(j); S.bad(); buzz(25);
+    if (A.length && !isFull(A)) { sel = j; S.pick(A[A.length - 1]); } else sel = -1;
+    return;
+  }
+  const m = Math.min(topRun(sel), CAP - A.length);
+  history.push({ jars: jars.map(a => a.slice()), mask: mask.map(a => a.slice()) });
+  const now = performance.now();
+  for (let i = 0; i < m; i++) {
+    const fs = from.length - 1, ts = A.length;
+    const p0 = slotXY(sel, fs), p1 = slotXY(j, ts);
+    p0.y = L.pos[sel].y - L.d * .7;
+    const key = j + ':' + ts;
+    hidden.set(key, (hidden.get(key) || 0) + 1);
+    flying.push({ c, p0, p1, t0: now + i * 90, dur: 380, key, jar: j });
+    A.push(from.pop()); mask[sel].pop(); mask[j].push(false);
+  }
+  wakeTop(sel);
+  sel = -1; moves++; hud();
+}
+function shake(j) { shakes.set(j, performance.now()); }
+
+function landed(f) {
+  const n = hidden.get(f.key) - 1; if (n > 0) hidden.set(f.key, n); else hidden.delete(f.key);
+  S.drop(f.c); buzz(8);
+  const A = jars[f.jar];
+  if (!flying.some(o => o !== f && o.jar === f.jar) && isFull(A)) {
+    glows.set(f.jar, performance.now()); S.full(); buzz([15, 40, 15]);
+    const p = L.pos[f.jar];
+    for (let i = 0; i < 26; i++) particles.push({ x: p.x + L.jw / 2, y: p.y + L.jh / 2, vx: (Math.random() - .5) * 4, vy: -Math.random() * 4 - 1, life: 1, c: COLORS[A[0]] });
+    if (fz >= 0 && !thawT && !frozenNow(fz)) { thawT = performance.now(); S.thaw(); }
+  }
+  if (!flying.some(o => o !== f) && isDone(jars)) setTimeout(win, 650);
+}
+
+function plural(n) { return n === 1 ? 'ruch' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'ruchy' : 'ruchów'; }
+function win() {
+  if (state !== 'play') return;
+  state = 'win';
+  const { k } = params(level), par = Math.round(k * 2.6 + (fz >= 0 ? 2 : 0));
+  const stars = moves <= par ? 3 : moves <= par * 1.5 ? 2 : 1;
+  starsBy[level] = Math.max(starsBy[level] || 0, stars);
+  const done = level; level++;
+  store.set('sw_level', level); store.set('sw_starsBy', starsBy);
+  const chapterDone = done % 10 === 0 && done <= MAX_LEVEL;
+  $('winT').textContent = chapterDone ? 'Rozdział ukończony!' : 'Pięknie świeci!';
+  $('winStars').innerHTML = [1, 2, 3].map(i => i <= stars ? '★' : '<span class="off">★</span>').join('');
+  $('winInfo').textContent = chapterDone
+    ? (done === MAX_LEVEL ? 'Wszystkie 100 poziomów za Tobą! Dalej czekają poziomy bez końca.' : `„${CHAPTERS[chapterOf(done)].name}” zaliczona. Następny rozdział: „${CHAPTERS[chapterOf(level)].name}”.`)
+    : `${moves} ${plural(moves)} · na 3 gwiazdki: najwyżej ${par}`;
+  chapterRows($('winChap'), true);
+  $('win').classList.add('show'); S.win();
+}
+
+function undo() {
+  if (!undoLeft || !history.length || flying.length) return;
+  const h = history.pop(); jars = h.jars; mask = h.mask;
+  undoLeft--; sel = -1; moves++; hidden.clear(); layout(); hud();
+}
+function addJar() {
+  if (!jarLeft || flying.length) return;
+  history.push({ jars: jars.map(a => a.slice()), mask: mask.map(a => a.slice()) });
+  jars.push([]); mask.push([]); jarLeft--; sel = -1; layout(); hud(); tone(660, .2, 'sine', .08);
+}
+
+// --- ekrany ---
+function chapterRows(el, onlyCurrent) {
+  const cur = chapterOf(level);
+  const list = onlyCurrent ? [cur] : CHAPTERS.map((_, i) => i);
+  el.innerHTML = list.map(i => {
+    const c = CHAPTERS[i], done = Math.max(0, Math.min(10, level - 1 - i * 10)), lock = i > cur;
+    let st = 0; for (let l = i * 10 + 1; l <= i * 10 + 10; l++) st += starsBy[l] || 0;
+    return `<div class="ch${i === cur ? ' cur' : ''}${lock ? ' lock' : ''}">
+      <div class="t"><span>${lock ? '🔒 ' : done === 10 ? '✓ ' : ''}${c.name}</span><span>${lock ? 'poz. ' + (i * 10 + 1) + '–' + (i * 10 + 10) : '★ ' + st + ' / 30'}</span></div>
+      <div class="s">${c.note}</div>${lock ? '' : `<div class="bar"><i style="width:${done * 10}%"></i></div>`}</div>`;
+  }).join('') + (level > MAX_LEVEL ? `<div class="ch cur"><div class="t"><span>Bez końca</span><span>poz. ${level}</span></div><div class="s">wszystkie rozdziały ukończone</div></div>` : '');
+}
+function showMenu() {
+  state = 'menu';
+  $('play').textContent = level > 1 ? 'Graj · poziom ' + level : 'Graj';
+  chapterRows($('chapters'), false);
+  $('menu').classList.add('show');
+}
+function begin() {
+  $('menu').classList.remove('show');
+  const ch = CHAPTERS[chapterOf(level)];
+  if (ch.feature && !seen.includes(ch.feature) && level <= MAX_LEVEL) {
+    seen.push(ch.feature); store.set('sw_seen', seen);
+    $('introT').textContent = ch.title; $('introP').textContent = ch.text;
+    state = 'intro'; drawDemo(ch.feature); $('intro').classList.add('show');
+    return;
+  }
+  startLevel();
+}
+
+// --- dotyk ---
+cv.addEventListener('pointerdown', e => {
+  if (state !== 'play') return;
+  const x = e.clientX, y = e.clientY;
+  for (let j = 0; j < jars.length; j++) {
+    const p = L.pos[j];
+    if (x > p.x - 10 && x < p.x + L.jw + 10 && y > p.y - L.d * 1.4 && y < p.y + L.jh + 10) { tapJar(j); return; }
+  }
+  sel = -1;
+});
+$('undo').onclick = undo;
+$('addJar').onclick = addJar;
+$('restart').onclick = () => { if (state === 'play') { startLevel(); tone(330, .15, 'triangle', .06); } };
+$('menuBtn').onclick = () => { if (state === 'play') showMenu(); };
+$('snd').onclick = () => { muted = !muted; store.set('sw_muted', muted); hud(); };
+$('play').onclick = () => { audio(); begin(); };
+$('introGo').onclick = () => { $('intro').classList.remove('show'); startLevel(); };
+$('next').onclick = () => { $('win').classList.remove('show'); begin(); };
+
+// --- rysowanie ---
+function fly(c2, x, y, c, t, r, lift = 0, asleep = false) {
+  const bob = asleep ? 0 : Math.sin(t / 380 + x * .05 + y * .03) * r * .08;
+  y += bob - lift;
+  if (asleep) {
+    c2.fillStyle = 'rgba(150,160,200,.22)'; c2.beginPath(); c2.arc(x, y, r * 1.15, 0, 7); c2.fill();
+    c2.fillStyle = '#7d86ad'; c2.beginPath(); c2.arc(x, y, r * .55, 0, 7); c2.fill();
+    c2.fillStyle = '#c8cdea'; c2.font = `800 ${r * .75}px system-ui, sans-serif`; c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    c2.fillText('z', x + r * .8, y - r * .75);
+    return;
+  }
+  const g = c2.createRadialGradient(x, y, 0, x, y, r * 1.9);
+  g.addColorStop(0, c); g.addColorStop(.35, c + 'aa'); g.addColorStop(1, c + '00');
+  c2.fillStyle = g; c2.beginPath(); c2.arc(x, y, r * 1.9, 0, 7); c2.fill();
+  c2.fillStyle = '#ffffffcc'; c2.beginPath(); c2.arc(x, y, r * .45, 0, 7); c2.fill();
+  c2.globalAlpha = .45 + Math.sin(t / 60 + x) * .2; c2.fillStyle = '#e8f0ff';
+  c2.beginPath(); c2.ellipse(x - r * .55, y - r * .55, r * .38, r * .2, -.6, 0, 7); c2.fill();
+  c2.beginPath(); c2.ellipse(x + r * .55, y - r * .55, r * .38, r * .2, .6, 0, 7); c2.fill();
+  c2.globalAlpha = 1;
+}
+
+function jarPath(c2, x, y, w, h) {
+  const r = w * .28, neck = w * .12;
+  c2.beginPath();
+  c2.moveTo(x + neck, y);
+  c2.lineTo(x + neck, y + w * .18);
+  c2.quadraticCurveTo(x, y + w * .22, x, y + w * .4);
+  c2.lineTo(x, y + h - r);
+  c2.quadraticCurveTo(x, y + h, x + r, y + h);
+  c2.lineTo(x + w - r, y + h);
+  c2.quadraticCurveTo(x + w, y + h, x + w, y + h - r);
+  c2.lineTo(x + w, y + w * .4);
+  c2.quadraticCurveTo(x + w, y + w * .22, x + w - neck, y + w * .18);
+  c2.lineTo(x + w - neck, y);
+}
+function frost(c2, x, y, w, h, alpha, left) {
+  c2.save(); jarPath(c2, x, y, w, h); c2.clip();
+  c2.globalAlpha = alpha;
+  const g = c2.createLinearGradient(x, y, x + w, y + h);
+  g.addColorStop(0, 'rgba(210,240,255,.75)'); g.addColorStop(1, 'rgba(150,200,240,.55)');
+  c2.fillStyle = g; c2.fillRect(x, y, w, h);
+  c2.strokeStyle = 'rgba(255,255,255,.7)'; c2.lineWidth = 1.2;
+  for (let i = 0; i < 6; i++) { const yy = y + h * (.15 + i * .14); c2.beginPath(); c2.moveTo(x, yy); c2.lineTo(x + w * .3, yy - w * .2); c2.lineTo(x + w * .6, yy + w * .05); c2.lineTo(x + w, yy - w * .15); c2.stroke(); }
+  c2.restore();
+  if (left > 0) {
+    c2.globalAlpha = alpha;
+    c2.fillStyle = '#0d1640'; c2.beginPath(); c2.arc(x + w / 2, y + h / 2, w * .3, 0, 7); c2.fill();
+    c2.fillStyle = '#d6f0ff'; c2.font = `800 ${w * .26}px system-ui, sans-serif`; c2.textAlign = 'center'; c2.textBaseline = 'middle';
+    c2.fillText('❄' + left, x + w / 2, y + h / 2 + 1);
+    c2.globalAlpha = 1;
+  }
+}
+
+function draw(t) {
+  ctx.drawImage(bgCanvas, 0, 0, W, H);
+  if (state === 'menu' || state === 'intro' || !jars.length) { drawMenuFlies(t); return; }
+  const { jw, jh, d } = L;
+  for (let j = 0; j < jars.length; j++) {
+    let { x, y } = L.pos[j];
+    const sh = shakes.get(j);
+    if (sh) { const k = (t - sh) / 300; if (k > 1) shakes.delete(j); else x += Math.sin(k * 30) * 6 * (1 - k); }
+    const A = jars[j], full = isFull(A);
+    const gl = glows.get(j), glowK = full ? .5 + .5 * Math.sin(t / 500 + j) : 0;
+    if (full) {
+      const c = COLORS[A[0]], gg = ctx.createRadialGradient(x + jw / 2, y + jh / 2, 0, x + jw / 2, y + jh / 2, jh * .9);
+      gg.addColorStop(0, c + '44'); gg.addColorStop(1, c + '00');
+      ctx.fillStyle = gg; ctx.fillRect(x - jh, y - jh * .4, jw + jh * 2, jh * 1.8);
+    }
+    jarPath(ctx, x, y, jw, jh);
+    ctx.fillStyle = 'rgba(160,190,255,.07)'; ctx.fill();
+    for (let s = 0; s < A.length; s++) {
+      if (hidden.has(j + ':' + s)) continue;
+      const p = slotXY(j, s);
+      const lift = sel === j && s === A.length - 1 ? (p.y - y) + d * .7 : 0;
+      fly(ctx, p.x + (x - L.pos[j].x), p.y, COLORS[A[s]], t, d * .36, lift, mask[j][s]);
+    }
+    jarPath(ctx, x, y, jw, jh);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = sel === j ? 'rgba(255,230,140,.95)' : `rgba(190,210,255,${.35 + glowK * .3})`;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.08)';
+    ctx.fillRect(x + jw * .14, y + jw * .45, jw * .08, jh - jw * .75);
+    if (j === fz) {
+      const fr = frozenNow(j), k = thawT ? Math.max(0, 1 - (t - thawT) / 700) : 1;
+      if (fr || k > 0) frost(ctx, x, y, jw, jh, fr ? 1 : k, fr ? need - fullCount(jars, fz) : 0);
+    }
+    if (full) {
+      const k = gl ? Math.min(1, (t - gl) / 300) : 1;
+      ctx.fillStyle = '#c99a4a';
+      const lw = jw * .82, lx = x + (jw - lw) / 2, ly = y - 8 - (1 - k) * 30;
+      ctx.globalAlpha = k;
+      ctx.beginPath(); ctx.roundRect ? ctx.roundRect(lx, ly, lw, 10, 4) : ctx.rect(lx, ly, lw, 10); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+  for (let i = flying.length - 1; i >= 0; i--) {
+    const f = flying[i];
+    const k = (t - f.t0) / f.dur;
+    if (k < 0) continue;
+    if (k >= 1) { flying.splice(i, 1); landed(f); continue; }
+    const e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    const hop = Math.min(f.p0.y, f.p1.y) - L.d * 1.6;
+    const x = f.p0.x + (f.p1.x - f.p0.x) * e;
+    const y = (1 - e) * (1 - e) * f.p0.y + 2 * (1 - e) * e * hop + e * e * f.p1.y;
+    fly(ctx, x, y, COLORS[f.c], t, d * .36);
+  }
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += .06; p.life -= .016;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    ctx.globalAlpha = p.life; ctx.fillStyle = p.c;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 2.2, 0, 7); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+const menuFlies = Array.from({ length: 22 }, (_, i) => ({ c: COLORS[i % 8], a: Math.random() * 7, s: .3 + Math.random() * .6, r: .25 + Math.random() * .3 }));
+function drawMenuFlies(t) {
+  for (const f of menuFlies) {
+    const x = W / 2 + Math.cos(t / 2400 * f.s + f.a) * W * f.r * 1.4;
+    const y = H / 2 + Math.sin(t / 1700 * f.s + f.a * 2) * H * f.r;
+    fly(ctx, x, y, f.c, t, 7);
+  }
+}
+
+// mały obrazek na ekranie „Nowość”
+function drawDemo(f) {
+  const c = $('demo').getContext('2d'), w = 70, h = 190, d = 40;
+  c.clearRect(0, 0, 320, 240);
+  const jar = (x, cols, sleep, fr) => {
+    jarPath(c, x, 30, w, h); c.fillStyle = 'rgba(160,190,255,.1)'; c.fill();
+    cols.forEach((col, s) => fly(c, x + w / 2, 30 + h - d * .62 - s * d * .98, COLORS[col], 0, d * .36, 0, sleep[s]));
+    jarPath(c, x, 30, w, h); c.lineWidth = 2; c.strokeStyle = 'rgba(190,210,255,.6)'; c.stroke();
+    if (fr) frost(c, x, 30, w, h, 1, 1);
+  };
+  if (f === 'hidden') { jar(70, [2, 1, 4, 0], [true, true, false, false]); jar(180, [0, 0], [false, false]); }
+  else { jar(70, [3, 3, 3, 3], [], false); jar(180, [1, 4, 2, 5], [], true); }
+}
+
+function loop(t) { draw(t); requestAnimationFrame(loop); }
+resize(); hud(); showMenu(); requestAnimationFrame(loop);
+document.addEventListener('visibilitychange', () => { if (document.hidden && actx) actx.suspend(); });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
