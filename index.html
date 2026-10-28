@@ -56,25 +56,25 @@
 <body>
 <canvas id="cv"></canvas>
 <div id="top">
-  <button class="btn" id="snd" aria-label="Dźwięk">🔊</button>
+  <button class="btn" id="snd" aria-label="Sound">🔊</button>
   <div><div id="lvl">Poziom 1</div><div id="moves">ruchy: 0</div></div>
   <button class="btn" id="menuBtn" aria-label="Menu">☰</button>
 </div>
 <div id="bottom">
-  <button class="btn" id="restart" aria-label="Od nowa">↻</button>
-  <button class="btn" id="undo">↶ Cofnij<span class="n" id="undoN">5</span></button>
-  <button class="btn" id="addJar">＋ Słoik<span class="n" id="jarN">1</span></button>
+  <button class="btn" id="restart" aria-label="Restart">↻</button>
+  <button class="btn" id="undo">↶ <span id="undoL">Cofnij</span><span class="n" id="undoN">5</span></button>
+  <button class="btn" id="addJar">＋ <span id="jarL">Słoik</span><span class="n" id="jarN">1</span></button>
 </div>
 
 <div class="ov show" id="menu"><div class="card">
-  <h1>Świetliki</h1>
-  <p>Przenoś świetliki między słoikami. Do świetlika możesz dołożyć tylko taki sam kolor. Zbierz każdy kolor w osobnym słoiku!</p>
+  <h1 id="title">Świetliki</h1>
+  <p id="howto">Przenoś świetliki między słoikami. Do świetlika możesz dołożyć tylko taki sam kolor. Zbierz każdy kolor w osobnym słoiku!</p>
   <button class="big" id="play">Graj</button>
   <div class="chapters" id="chapters"></div>
 </div></div>
 
 <div class="ov" id="intro"><div class="card">
-  <div class="new">Nowość</div>
+  <div class="new" id="newL">Nowość</div>
   <h2 id="introT"></h2>
   <canvas class="demo" id="demo" width="320" height="240"></canvas>
   <p id="introP"></p>
@@ -92,20 +92,28 @@
 <script>
 'use strict';
 const CAP = 4, MAX_LEVEL = 100;
+// język: polski dla telefonów ustawionych na polski, dla wszystkich innych angielski
+const LANG = (navigator.languages && navigator.languages[0] || navigator.language || 'en').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+const tr = (pl, en) => LANG === 'pl' ? pl : en;
+document.documentElement.lang = LANG;
 const COLORS = ['#ffd84a', '#5cf2ff', '#ff5c8a', '#8cff6a', '#b98cff', '#ff9a3c', '#4a8cff', '#f4f4ff', '#ff4ad8', '#3cffb4', '#d9b26a', '#ff3c3c'];
 const CHAPTERS = [
-  { name: 'Polana', note: 'pierwsze świetliki' },
-  { name: 'Mgła', note: 'część świetlików śpi', feature: 'hidden',
-    title: 'Śpiące świetliki', text: 'Szare świetliki śpią we mgle. Obudzą się i pokażą kolor, gdy znajdą się na samej górze słoika.' },
-  { name: 'Szron', note: 'zamrożony słoik', feature: 'frozen',
-    title: 'Zamrożony słoik', text: 'Oszroniony słoik jest zamknięty. Odtaje, gdy napełnisz tyle słoików jednym kolorem, ile pokazuje płatek śniegu.' },
-  { name: 'Stary sad', note: 'więcej kolorów' },
-  { name: 'Mokradła', note: 'gęstsza mgła' },
-  { name: 'Łąka nocą', note: 'szron i mgła razem' },
-  { name: 'Wzgórze', note: 'dziesięć kolorów' },
-  { name: 'Brzozowy gaj', note: 'jedenaście kolorów' },
-  { name: 'Mleczna Droga', note: 'pełna tęcza' },
-  { name: 'Gwiazdozbiór', note: 'ostatni sprawdzian' },
+  { name: tr('Polana', 'Meadow'), note: tr('pierwsze świetliki', 'your first fireflies') },
+  { name: tr('Mgła', 'Mist'), note: tr('część świetlików śpi', 'some fireflies are asleep'), feature: 'hidden',
+    title: tr('Śpiące świetliki', 'Sleeping fireflies'),
+    text: tr('Szare świetliki śpią we mgle. Obudzą się i pokażą kolor, gdy znajdą się na samej górze słoika.',
+      'Grey fireflies are asleep in the mist. They wake up and show their colour when they reach the top of a jar.') },
+  { name: tr('Szron', 'Frost'), note: tr('zamrożony słoik', 'a frozen jar'), feature: 'frozen',
+    title: tr('Zamrożony słoik', 'Frozen jar'),
+    text: tr('Oszroniony słoik jest zamknięty. Odtaje, gdy napełnisz tyle słoików jednym kolorem, ile pokazuje płatek śniegu.',
+      'A frosted jar is locked. It thaws once you fill as many jars with a single colour as the snowflake shows.') },
+  { name: tr('Stary sad', 'Old Orchard'), note: tr('więcej kolorów', 'more colours') },
+  { name: tr('Mokradła', 'Marshes'), note: tr('gęstsza mgła', 'thicker mist') },
+  { name: tr('Łąka nocą', 'Night Field'), note: tr('szron i mgła razem', 'frost and mist together') },
+  { name: tr('Wzgórze', 'Hilltop'), note: tr('dziesięć kolorów', 'ten colours') },
+  { name: tr('Brzozowy gaj', 'Birch Grove'), note: tr('jedenaście kolorów', 'eleven colours') },
+  { name: tr('Mleczna Droga', 'Milky Way'), note: tr('pełna tęcza', 'the full rainbow') },
+  { name: tr('Gwiazdozbiór', 'Constellation'), note: tr('ostatni sprawdzian', 'the final test') },
 ];
 const chapterOf = lv => Math.min(Math.floor((lv - 1) / 10), CHAPTERS.length - 1);
 const featureFrom = f => CHAPTERS.findIndex(c => c.feature === f) * 10 + 1;
@@ -222,8 +230,8 @@ function startLevel() {
 }
 const frozenNow = j => j === fz && fz >= 0 && fullCount(jars, fz) < need;
 function hud() {
-  $('lvl').textContent = 'Poziom ' + level;
-  $('moves').textContent = CHAPTERS[chapterOf(level)].name + ' · ruchy: ' + moves;
+  $('lvl').textContent = tr('Poziom ', 'Level ') + level;
+  $('moves').textContent = CHAPTERS[chapterOf(level)].name + tr(' · ruchy: ', ' · moves: ') + moves;
   $('undoN').textContent = undoLeft; $('jarN').textContent = jarLeft;
   $('undo').disabled = !undoLeft || !history.length;
   $('addJar').disabled = !jarLeft;
@@ -345,7 +353,7 @@ function landed(f) {
   if (!flying.some(o => o !== f) && isDone(jars)) setTimeout(win, 650);
 }
 
-function plural(n) { return n === 1 ? 'ruch' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'ruchy' : 'ruchów'; }
+function plural(n) { if (LANG !== 'pl') return n === 1 ? 'move' : 'moves'; return n === 1 ? 'ruch' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? 'ruchy' : 'ruchów'; }
 function win() {
   if (state !== 'play') return;
   state = 'win';
@@ -355,11 +363,12 @@ function win() {
   const done = level; level++;
   store.set('sw_level', level); store.set('sw_starsBy', starsBy);
   const chapterDone = done % 10 === 0 && done <= MAX_LEVEL;
-  $('winT').textContent = chapterDone ? 'Rozdział ukończony!' : 'Pięknie świeci!';
+  $('winT').textContent = chapterDone ? tr('Rozdział ukończony!', 'Chapter complete!') : tr('Pięknie świeci!', 'What a glow!');
   $('winStars').innerHTML = [1, 2, 3].map(i => i <= stars ? '★' : '<span class="off">★</span>').join('');
   $('winInfo').textContent = chapterDone
-    ? (done === MAX_LEVEL ? 'Wszystkie 100 poziomów za Tobą! Dalej czekają poziomy bez końca.' : `„${CHAPTERS[chapterOf(done)].name}” zaliczona. Następny rozdział: „${CHAPTERS[chapterOf(level)].name}”.`)
-    : `${moves} ${plural(moves)} · na 3 gwiazdki: najwyżej ${par}`;
+    ? (done === MAX_LEVEL ? tr('Wszystkie 100 poziomów za Tobą! Dalej czekają poziomy bez końca.', 'All 100 levels done! Endless levels await.')
+      : tr(`„${CHAPTERS[chapterOf(done)].name}” zaliczona. Następny rozdział: „${CHAPTERS[chapterOf(level)].name}”.`, `“${CHAPTERS[chapterOf(done)].name}” complete. Next chapter: “${CHAPTERS[chapterOf(level)].name}”.`))
+    : `${moves} ${plural(moves)} · ` + tr(`na 3 gwiazdki: najwyżej ${par}`, `3 stars: ${par} or fewer`);
   chapterRows($('winChap'), true);
   $('win').classList.add('show'); S.win();
 }
@@ -383,13 +392,13 @@ function chapterRows(el, onlyCurrent) {
     const c = CHAPTERS[i], done = Math.max(0, Math.min(10, level - 1 - i * 10)), lock = i > cur;
     let st = 0; for (let l = i * 10 + 1; l <= i * 10 + 10; l++) st += starsBy[l] || 0;
     return `<div class="ch${i === cur ? ' cur' : ''}${lock ? ' lock' : ''}">
-      <div class="t"><span>${lock ? '🔒 ' : done === 10 ? '✓ ' : ''}${c.name}</span><span>${lock ? 'poz. ' + (i * 10 + 1) + '–' + (i * 10 + 10) : '★ ' + st + ' / 30'}</span></div>
+      <div class="t"><span>${lock ? '🔒 ' : done === 10 ? '✓ ' : ''}${c.name}</span><span>${lock ? tr('poz. ', 'lv. ') + (i * 10 + 1) + '–' + (i * 10 + 10) : '★ ' + st + ' / 30'}</span></div>
       <div class="s">${c.note}</div>${lock ? '' : `<div class="bar"><i style="width:${done * 10}%"></i></div>`}</div>`;
-  }).join('') + (level > MAX_LEVEL ? `<div class="ch cur"><div class="t"><span>Bez końca</span><span>poz. ${level}</span></div><div class="s">wszystkie rozdziały ukończone</div></div>` : '');
+  }).join('') + (level > MAX_LEVEL ? `<div class="ch cur"><div class="t"><span>${tr('Bez końca', 'Endless')}</span><span>${tr('poz. ', 'lv. ')}${level}</span></div><div class="s">${tr('wszystkie rozdziały ukończone', 'all chapters complete')}</div></div>` : '');
 }
 function showMenu() {
   state = 'menu';
-  $('play').textContent = level > 1 ? 'Graj · poziom ' + level : 'Graj';
+  $('play').textContent = level > 1 ? tr('Graj · poziom ', 'Play · level ') + level : tr('Graj', 'Play');
   chapterRows($('chapters'), false);
   $('menu').classList.add('show');
 }
@@ -562,6 +571,17 @@ function drawDemo(f) {
   if (f === 'hidden') { jar(70, [2, 1, 4, 0], [true, true, false, false]); jar(180, [0, 0], [false, false]); }
   else { jar(70, [3, 3, 3, 3], [], false); jar(180, [1, 4, 2, 5], [], true); }
 }
+
+function applyTexts() {
+  document.title = tr('Świetliki', 'Firefly Jars');
+  $('title').textContent = tr('Świetliki', 'Firefly Jars');
+  $('howto').textContent = tr('Przenoś świetliki między słoikami. Do świetlika możesz dołożyć tylko taki sam kolor. Zbierz każdy kolor w osobnym słoiku!',
+    'Move fireflies between jars. A firefly can only go on top of the same colour or into an empty jar. Gather each colour in its own jar!');
+  $('undoL').textContent = tr('Cofnij', 'Undo'); $('jarL').textContent = tr('Słoik', 'Jar');
+  $('newL').textContent = tr('Nowość', 'New'); $('introGo').textContent = tr('Rozumiem', 'Got it'); $('next').textContent = tr('Dalej', 'Next');
+  $('snd').setAttribute('aria-label', tr('Dźwięk', 'Sound')); $('restart').setAttribute('aria-label', tr('Od nowa', 'Restart'));
+}
+applyTexts();
 
 function loop(t) { draw(t); requestAnimationFrame(loop); }
 resize(); hud(); showMenu(); requestAnimationFrame(loop);
